@@ -1,0 +1,49 @@
+import sqlite3
+
+db_path = "D:/comp/04_query.gpkg"
+
+conn = sqlite3.connect(db_path)
+
+cursor = conn.cursor()
+
+cursor.execute("SELECT table_name, data_type FROM gpkg_contents")
+
+
+
+records = cursor.fetchall()
+
+cnt=0
+
+for row in records:
+
+    print(row)
+
+    if row[1] == 'features':
+
+        vector_path = db_path + "|layername="+row[0]
+
+        iface.addVectorLayer(vector_path,row[0],"ogr")
+
+    elif row[1] == 'attributes' : 
+
+        cnt+=1
+
+    else:
+
+        raster_path = "GPKG:" + db_path + ":" + row[0]
+
+        rlayer = QgsRasterLayer(raster_path, row[0])
+
+        if not rlayer.isValid():
+
+            print("Raster layer is not valid : ", row[0],row[1])
+
+        else:
+
+            QgsProject.instance().addMapLayer(rlayer)
+
+print('속성테이블 데이터 개수 : ' , cnt)
+
+cursor.close()
+
+conn.close()

@@ -1,0 +1,9 @@
+import os
+folder_path = r"D:\gis\exec"
+all_files = os.listdir(folder_path)
+shapefile_names = []
+for filename in all_files:
+    if filename.endswith(".shp"):
+        name_only = os.path.splitext(filename)[0]
+        shapefile_names.append(name_only)
+print("file_name =", shapefile_names)

@@ -1,0 +1,13 @@
+from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsProject
+gpkg_path = r"D:\comp\05_geometry.gpkg"
+vector_layer_names = ["building", "jijuk"]
+project = QgsProject.instance()
+for name in vector_layer_names:
+    layer_path = gpkg_path + f"|layername={name}"  # 지오패키지에서 특정 레이어 선택
+    vector_layer = QgsVectorLayer(layer_path, name, "ogr")
+    
+    if vector_layer.isValid():
+        project.addMapLayer(vector_layer)
+        print(f"벡터 레이어 '{name}' 추가됨")
+    else:
+        print(f"벡터 레이어 '{name}' 불러오기 실패")

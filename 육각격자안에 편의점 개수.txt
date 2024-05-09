@@ -1,0 +1,54 @@
+# 육각 격자 생성
+hex_grid_layer = processing.run("qgis:creategrid", {
+    'TYPE': 4,  # 육각형 격자
+    'EXTENT': sejoug_layer.extent(),  # 세종시 전체 영역
+    'HSPACING': 500,
+    'VSPACING': 500,
+    'CRS': 'EPSG:5181',  # 격자에 사용할 좌표계
+    'OUTPUT': 'memory:'
+})['OUTPUT']
+
+
+# 육각 격자를 세종시 경계로 클리핑
+clipped_hex_grid_layer = processing.run("native:extractbylocation",
+    {'INPUT':hex_grid_layer,'PREDICATE':[0],'INTERSECT':sejoug_layer,'OUTPUT':'memory:'}
+    )['OUTPUT']
+
+
+
+# 생성된 육각 격자를 QGIS 프로젝트에 추가
+QgsProject.instance().addMapLayer(clipped_hex_grid_layer)
+
+hex_with_convenience_count = processing.run("native:countpointsinpolygon", {
+    'POLYGONS': clipped_hex_grid_layer,  # 폴리곤 레이어
+    'POINTS': convenience_layer,  # 포인트 레이어
+    'WEIGHT': None,  # 각 포인트의 가중치
+    'CLASSFIELD': '',  # 분류 필드
+    'OUTPUT': 'memory:'
+})['OUTPUT']
+# 격자 내 편의점 수 계산
+total_convenience_count = 0
+for feature in hex_with_convenience_count.getFeatures():
+    total_convenience_count += feature["NUMPOINTS"]
+
+print("세종시 500미터 육각 격자 내에 포함된 편의점의 총 개수:", total_convenience_count)
+layer_settings  = QgsPalLayerSettings()
+text_format = QgsTextFormat()
+
+layer_settings.setFormat(text_format)
+
+layer_settings.fieldName = "NUMPOINTS"
+
+layer_settings.enabled = True
+
+layer_settings = QgsVectorLayerSimpleLabeling(layer_settings)
+
+hex_with_convenience_count.setLabelsEnabled(True)
+
+hex_with_convenience_count.setLabeling(layer_settings)
+
+hex_with_convenience_count.triggerRepaint()
+
+
+# 결과 레이어를 QGIS 프로젝트에 추가
+QgsProject.instance().addMapLayer(hex_with_convenience_count)

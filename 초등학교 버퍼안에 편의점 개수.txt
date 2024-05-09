@@ -1,0 +1,85 @@
+# 데이터 준비
+import os
+import processing
+from qgis.core import QgsGeometry
+
+schools_layer_path = r'D:\gis\exec\test_data\ex01\school\school01.shp'  # 세종시 초등학교
+convenience_layer_path = r'D:\gis\exec\test_data\ex01\conven\conven01.shp'  # 세종시 편의점
+sejoug_layer_path = r'D:\gis\exec\test_data\ex01\sejoug\sejoug01.shp'  # 세종시 경계
+
+# 레이어 불러오기
+schools_layer = QgsVectorLayer(schools_layer_path, "세종시 초등학교", "ogr")
+convenience_layer = QgsVectorLayer(convenience_layer_path, "세종시 편의점", "ogr")
+sejoug_layer = QgsVectorLayer(sejoug_layer_path, "세종시 행정구역 경계", "ogr")
+
+# 레이어 유효성 확인
+if not schools_layer.isValid():
+    print("레이어 로드 실패:", schools_layer_path)
+else:
+    # QGIS 프로젝트에 레이어 추가
+    QgsProject.instance().addMapLayer(schools_layer)
+    print("레이어 추가 성공:", schools_layer.name())
+    
+if not convenience_layer.isValid():
+    print("레이어 로드 실패:", convenience_layer_path)
+else:
+    # QGIS 프로젝트에 레이어 추가
+    QgsProject.instance().addMapLayer(convenience_layer)
+    print("레이어 추가 성공:", convenience_layer.name())
+    
+if not sejoug_layer.isValid():
+    print("레이어 로드 실패:", sejoug_layer_path)
+else:
+    # QGIS 프로젝트에 레이어 추가
+    QgsProject.instance().addMapLayer(sejoug_layer)
+    print("레이어 추가 성공:", sejoug_layer.name())  
+
+crs = QgsCoordinateReferenceSystem("EPSG:5181")  # WGS 84
+schools_layer.setCrs(crs)
+convenience_layer.setCrs(crs)
+sejoug_layer.setCrs(crs)
+
+print("좌표계가 설정되었습니다:", schools_layer.crs().authid())
+  
+
+
+clipped_sejong_schools_layer = processing.run("native:clip", {
+
+    'INPUT': schools_layer,
+
+    'OVERLAY': sejoug_layer,
+
+    'OUTPUT': 'memory:'
+
+})['OUTPUT']
+
+
+QgsProject.instance().addMapLayer(clipped_sejong_schools_layer)
+
+
+
+# 500미터 버퍼 생성
+buffered_sejong_schools_layer = processing.run("native:buffer", {
+    'INPUT': clipped_sejong_schools_layer,
+    'DISTANCE': 500,  # 버퍼 거리
+    'SEGMENTS': 5,  # 버퍼 부드러움 정도
+    'END_CAP_STYLE': 0,
+    'JOIN_STYLE': 0,
+    'MITER_LIMIT': 2,
+    'DISSOLVE': True,  # 버퍼 중첩 해소
+    'OUTPUT': 'memory:'
+})['OUTPUT']
+
+# 버퍼된 초등학교 레이어를 추가합니다.
+
+QgsProject.instance().addMapLayer(buffered_sejong_schools_layer)
+
+places_along_danube = processing.run("native:extractbylocation",
+    {'INPUT':convenience_layer,'PREDICATE':[0],'INTERSECT':buffered_sejong_schools_layer,'OUTPUT':'memory:'}
+    )['OUTPUT']
+
+QgsProject.instance().addMapLayer(places_along_danube)
+
+feature_count = places_along_danube.featureCount()
+
+print("500미터 버퍼에 포함된 편의점 개수:", feature_count)

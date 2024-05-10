@@ -1,0 +1,39 @@
+import os
+from qgis.core import (
+    QgsProject,
+    QgsVectorLayer,
+    QgsCoordinateReferenceSystem,
+)
+import processing
+
+# GeoPackage 파일 경로와 레이어 이름 설정
+gpkg_path = r'D:\gis\data.gpkg'  # GeoPackage 파일 경로
+clip_layer_name = 'clip_layer'  # 기준 레이어
+target_layer_name = 'target_layer'  # 대상 레이어
+
+# GeoPackage에서 레이어 불러오기
+clip_layer = QgsVectorLayer(f"{gpkg_path}|layername={clip_layer_name}", clip_layer_name, "ogr")
+target_layer = QgsVectorLayer(f"{gpkg_path}|layername={target_layer_name}", target_layer_name, "ogr")
+
+# 레이어 유효성 확인
+if not clip_layer.isValid() or not target_layer.isValid():
+    print("Error: Could not load clip_layer or target_layer")
+else:
+    # 프로젝트에 레이어 추가
+    QgsProject.instance().addMapLayer(clip_layer)
+    QgsProject.instance().addMapLayer(target_layer)
+
+    # 클립 작업을 위한 출력 파일 경로 설정
+    output_path = r'D:\gis\clipped_output.shp'  # 결과 저장 경로
+
+    # 클립 작업 수행
+    processing.run(
+        "native:clip",
+        {
+            "INPUT": target_layer,  # 클립 대상 레이어
+            "OVERLAY": clip_layer,  # 기준 레이어
+            "OUTPUT": output_path,  # 출력 경로
+        },
+    )
+
+    print(f"Clip operation completed. Output saved to: {output_path}")

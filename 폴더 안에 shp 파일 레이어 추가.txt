@@ -1,0 +1,30 @@
+import os
+import processing
+from qgis.core import QgsGeometry
+directory_path = r'D:\gis'
+
+desired_crs = QgsCoordinateReferenceSystem("EPSG:5181")  # 예: WGS 84
+
+# 디렉토리 내의 모든 파일을 순회하여 .shp 파일을 찾습니다
+for filename in os.listdir(directory_path):
+    if filename.lower().endswith('.shp'):
+        # 파일 경로를 생성합니다
+        file_path = os.path.join(directory_path, filename)
+        
+        # 벡터 레이어를 생성합니다
+        layer = QgsVectorLayer(file_path, filename, 'ogr')
+        
+        # 레이어가 유효한지 확인합니다
+        if not layer.isValid():
+            print(f"Error loading layer: {filename}")
+        else:
+            # 현재 레이어의 좌표계를 확인합니다
+            current_crs = layer.crs()
+
+            if current_crs != desired_crs:
+                # 현재 레이어의 좌표계가 원하는 좌표계와 다르다면 변환합니다
+                layer.setCrs(desired_crs)  # 레이어의 좌표계를 설정하거나 변환
+
+            # QGIS 프로젝트에 레이어를 추가합니다
+            QgsProject.instance().addMapLayer(layer)
+            

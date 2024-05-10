@@ -1,0 +1,42 @@
+import os
+from qgis.core import (
+    QgsProject,
+    QgsVectorLayer,
+    QgsCoordinateReferenceSystem,
+)
+import processing
+
+# GeoPackage 파일 경로와 레이어 이름 설정
+gpkg_path = r'D:\comp\04_query.gpkg'  # GeoPackage 파일 경로
+buffer_layer_name = 'daejon_develop'  # 기준 레이어
+
+
+# GeoPackage에서 레이어 불러오기
+buffer_layer = QgsVectorLayer(f"{gpkg_path}|layername={buffer_layer_name}", buffer_layer_name, "ogr")
+
+if not source_layer.isValid():
+    raise Exception("GeoPackage에서 레이어를 로드할 수 없습니다.")
+
+else:
+    # 프로젝트에 레이어 추가
+    QgsProject.instance().addMapLayer(buffer_layer)
+
+buffer_output_path = f"{gpkg_path}|layername=new_buffer_layer"  # 버퍼 결과 저장
+buffer_distance = 100  # 버퍼 거리 (100m 예시)
+
+buffer_layer = processing.run("native:buffer", {
+    'INPUT': source_layer,
+    'DISTANCE': buffer_distance,
+    'SEGMENTS': 5,
+    'END_CAP_STYLE': 0,
+    'JOIN_STYLE': 0,
+    'MITER_LIMIT': 2,
+    'DISSOLVE': False,
+    'OUTPUT': buffer_output_path
+})['OUTPUT']
+
+
+# 결과 레이어를 QGIS 프로젝트에 추가
+QgsProject.instance().addMapLayer(buffer_layer)
+   
+

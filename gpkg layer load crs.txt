@@ -1,0 +1,37 @@
+import os
+from qgis.core import (
+    QgsProject,
+    QgsVectorLayer,
+    QgsCoordinateReferenceSystem,
+)
+import processing
+
+# GeoPackage 파일 경로와 레이어 이름 설정
+gpkg_path = r'D:\comp\04_query.gpkg'  # GeoPackage 파일 경로
+buffer_layer_name = 'daejon_develop'  # 기준 레이어
+jijuk_layer_name = 'daejon_jijuk'  # 기준 레이어
+
+# GeoPackage에서 레이어 불러오기
+buffer_layer = QgsVectorLayer(f"{gpkg_path}|layername={buffer_layer_name}", buffer_layer_name, "ogr")
+jijuk_layer = QgsVectorLayer(f"{gpkg_path}|layername={jijuk_layer_name}", jijuk_layer_name, "ogr")
+if not buffer_layer.isValid():
+    raise Exception("GeoPackage에서 레이어를 로드할 수 없습니다.")
+
+else:
+    # 프로젝트에 레이어 추가
+    QgsProject.instance().addMapLayer(buffer_layer)
+    
+    
+if not jijuk_layer.isValid():
+    raise Exception("GeoPackage에서 레이어를 로드할 수 없습니다.")
+
+else:
+    # 프로젝트에 레이어 추가
+    QgsProject.instance().addMapLayer(jijuk_layer)
+    
+crs =QgsCoordinateReferenceSystem("EPSG:5174")
+buffer_layer.setCrs(crs)
+jijuk_layer.setCrs(crs)
+print("좌표계가 설정되었습니다:", buffer_layer.crs().authid())
+
+
